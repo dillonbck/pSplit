@@ -16,23 +16,23 @@ class Controller(object):
 	def undoLastTimeSplit(self):
 		pass
 
-	def startTime(self):
+	def startCategoryTimer(self, category):
+		self.model.startTimer(category)
+
+	def pauseCategoryTimer(self, category):
 		pass
 
-	def pauseTime(self):
-		pass
 
 
 
+	def addGame(self, gameName):
+		self.model.addGame(gameName)
 
-	def addGame(self, name):
-		pass
+	def addGameCategory(self, game, categoryName):
+		self.model.addGameCategory(game, categoryName)
 
-	def addGameCategory(self, game, name):
-		pass
-
-	def addCategorySplit(self, category, name):
-		pass
+	def addCategorySplit(self, category, splitName):
+		self.model.addCategorySplit(category, splitName)
 
 
 	def getGames(self):
@@ -42,3 +42,7 @@ class Controller(object):
 	def getCategories(self, game):
 		categories = game.categories
 		return categories
+
+	def getSplits(self, category):
+		splits = category.splits
+		return splits

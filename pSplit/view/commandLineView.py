@@ -78,7 +78,7 @@ class CommandLineView(object):
 		for idx, o in enumerate(objects):
 			print idx, "-", o
 
-	def selectObjectIndex(self, objects):
+	def selectObjectIndex(self, objects, returnIdx=False):
 		o = None
 
 		self.listObjectIndices(objects)
@@ -100,7 +100,10 @@ class CommandLineView(object):
 			except ValueError:
 				print "Select a valid index!"
 
-		return o
+		if returnIdx:
+			return o, idx
+		else:
+			return o
 
 
 	def listGames(self):
@@ -120,3 +123,42 @@ class CommandLineView(object):
 		categories = self.controller.getCategories(game)
 		self.selectedCategory = self.selectObjectIndex(categories)
 
+	def listSplits(self, category):
+		splits = self.controller.getSplits(category)
+		self.listObjectIndices(splits)
+
+
+
+
+	def addSplit(self, category):
+		splitName = raw_input("Enter Split Name: ")
+		self.controller.addCategorySplit(category, splitName)
+
+	def deleteSplit(self, category):
+		splits = self.controller.getSplits(category)
+		selectedSplit = self.selectObjectIndex(splits)
+		category.splits.remove(selectedSplit)
+
+	def renameSplit(self, category):
+		splits = self.controller.getSplits(category)
+		selectedSplit = self.selectObjectIndex(splits)
+		newName = raw_input("New Split Name: ")
+		selectedSplit.name = newName
+
+	def moveSplit(self, category):
+		splits = self.controller.getSplits(category)
+		_, oldIndex = self.selectObjectIndex(splits, returnIdx=True)
+		_, newIndex = self.selectObjectIndex(splits, returnIdx=True)
+
+		category.splits.insert(newIndex, 
+							   category.splits.pop(oldIndex))
+
+	def selectSplit(self, category):
+		splits = self.controller.getSplits(category)
+		self.selectedSplit = self.selectObjectIndex(splits)
+
+
+	def startCategoryTimer(self, category):
+		self.controller.startCategoryTimer(category)
+		print "start timer"
+		pass
