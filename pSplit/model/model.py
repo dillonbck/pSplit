@@ -1,7 +1,8 @@
 from datetime import datetime
 import os
 import sys
-from threading import Thread
+import threading
+import time
 
 class Model(object):
 	def __init__(self):
@@ -24,6 +25,33 @@ class Model(object):
 
 	def startTimer(self, category):
 		self.timer.startTimer(category)
+                for split in category.splits:
+                    for splitTime in split.splitTimes:
+                        print splitTime
+
+class StoppableThread(threading.Thread):
+	"""Thread class with a stop() method. The thread itself has to check
+	regularly for the stopped() condition."""
+
+	def __init__(self, group=None, target=None, name=None,
+                     args=(), kwargs=None, verbose=None):
+		threading.Thread.__init__(self, group=group, target=target, name=name,
+                                  verbose=verbose)
+		self.target = target
+		self.args = args
+		self.kwargs = kwargs
+		self._stop = threading.Event()
+
+	def stop(self):
+		self._stop.set()
+
+	def stopped(self):
+		return self._stop.isSet()
+
+	def run(self):
+		while not self.stopped():
+			self.target()
+			time.sleep(.1)
 
 
 class Timer(object):
@@ -31,6 +59,7 @@ class Timer(object):
 		self.category = None
 		self.currentSplitIdx = -1
 		self.currentSplitTime = None
+                self.startTime = None
 
 	def startTimer(self, category):
 		self.category = category
@@ -39,10 +68,14 @@ class Timer(object):
 
 	def next(self):
 		self.currentSplitIdx += 1
+                now = datetime.now()
+
+                if self.currentSplitIdx == 0:
+                    self.startTime = now
 
 		# Skip this on first call
 		if self.currentSplitIdx > 0:
-			self.currentSplitTime.timeEnd = datetime.now()
+			self.currentSplitTime.timeEnd = now
 
 		# Skips this on last call
 		if self.currentSplitIdx < len(self.category.splits):
@@ -57,20 +90,22 @@ class Timer(object):
 
 	def waitForNextSplit(self):
 		self.timerRunning = True
-		t = Thread(target=self.showTimer)
+		t = StoppableThread(target=self.showTimer)
 		t.start()
-		os.system("pause")
-		self.timerRunning = False
+		#os.system("pause")
+                os.system('read -s -n 1')
+		t.stop()
+                print
 
 		self.next()
 
-
-
 	def showTimer(self):
-		while self.timerRunning:
-		    sys.stdout.write("\r")
-		    sys.stdout.write(str(datetime.now().microsecond))
-		    sys.stdout.flush()
+		sys.stdout.write("\r")
+                currentSplit = self.category.splits[self.currentSplitIdx]
+		sys.stdout.write(str(currentSplit) + "\t\t" 
+                                 + str(datetime.now() - self.startTime))
+		sys.stdout.flush()
+
 
 
 
@@ -118,12 +153,12 @@ class Split(object):
 
 class SplitTime(object):
 	def __init__(self):
-		self.date = None
 		self.timeStart = None
 		self.timeEnd = None
 
 	def __str__(self):
 
-		return (str(date) + "\n"
-			    + "\t" + str(self.timeStart) + " - " + str(self.timeEnd) + " : "
-			    + "\t" + str(self.timeEnd - self.timeStart))
+		return (str(self.timeStart.date()) + "\n"
+                        + "\t" + str(self.timeStart.time()) + " - " 
+                               + str(self.timeEnd.time()) + " : "
+			+ "\t" + str(self.timeEnd - self.timeStart))
